@@ -1,21 +1,33 @@
-<?php 
+<?php  
 	error_reporting(0);
 	include "koneksi.php";
 
-	//baca mode absensi terakhir
-	$mode = mysqli_query($konek, "select * from status");
+	// Baca mode absensi terakhir
+	$mode = mysqli_query($konek, "SELECT * FROM status");
 	$data_mode = mysqli_fetch_array($mode);
 	$mode_absen = $data_mode['mode'];
 
-	//status terakhir kemudian ditambah 1
-	$mode_absen = $mode_absen + 1;
-	if($mode_absen > 2)
-		$mode_absen = 1 ;
+	// Cek apakah ada permintaan untuk mengubah mode
+	if (isset($_GET['mode'])) {
+		// Ubah mode absensi berdasarkan parameter yang diterima
+		$mode_absen = intval($_GET['mode']); // Ambil nilai mode dari parameter URL dan ubah ke integer
 
-	//simpan mode absen di tabel status dengan cara update
-	$simpan = mysqli_query($konek, "update status set mode='$mode_absen'");
-	if($simpan)
-		echo "Berhasil Ubah Mode";
-	else
-		echo "Gagal";
-?>  
+		// Simpan mode absen di tabel status dengan cara update
+		$simpan = mysqli_query($konek, "UPDATE status SET mode='$mode_absen'");
+
+		if ($simpan) {
+			if ($mode_absen == 1) {
+				echo "Berhasil Ubah Mode ke Masuk";
+			} else if ($mode_absen == 2) {
+				echo "Berhasil Ubah Mode ke Keluar";
+			} else {
+				echo "Mode tidak valid";
+			}
+		} else {
+			echo "Gagal Ubah Mode: " . mysqli_error($konek);
+		}
+	} else {
+		// Jika tidak ada permintaan untuk mengubah mode, tampilkan mode saat ini
+		echo "Mode absensi saat ini: " . $mode_absen;
+	}
+?>

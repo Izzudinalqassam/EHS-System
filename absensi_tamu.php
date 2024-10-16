@@ -5,6 +5,7 @@
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <link rel="icon" href="image/bp.png" type="image/x-icon">
     <meta name="description" content="" />
     <meta name="author" content="" />
     <title>Dashboard - SB Admin</title>
@@ -17,19 +18,23 @@
 </head>
 
 <body class="sb-nav-fixed">
-    <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
-        <a class="navbar-brand" href="index.php">SISTEM EHS</a>
-        <button class="btn btn-link btn-sm order-1 order-lg-0" id="sidebarToggle" href="#"><i class="fas fa-bars"></i></button>
-
-        <ul class="navbar-nav ml-auto ml-md-0">
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" id="userDropdown" href="#" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fas fa-user fa-fw"></i></a>
-                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
-                    <a class="dropdown-item" href="login.html">Logout</a>
-                </div>
-            </li>
-        </ul>
-    </nav>
+<nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+    <a class="navbar-brand" href="index.php">
+        <img src="image/logo bp.png" alt="Logo Perusahaan" style="height: 40px; width: auto; margin-right: 10px;"> SISTEM EHS
+    </a>
+    <button class="btn btn-link btn-sm order-1 order-lg-0" id="sidebarToggle" href="#"><i class="fas fa-bars"></i></button>
+    <ul class="navbar-nav ml-auto ml-md-0">
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" id="userDropdown" href="#" role="button" data-toggle="dropdown"
+                aria-haspopup="true" aria-expanded="false">
+                <i class="fas fa-user fa-fw"></i>
+            </a>
+            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
+                <a class="dropdown-item" href="login.html">Logout</a>
+            </div>
+        </li>
+    </ul>
+</nav>
     <div id="layoutSidenav">
         <div id="layoutSidenav_nav">
             <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
@@ -44,17 +49,18 @@
                             <div class="sb-nav-link-icon"><i class="fas fa-user"></i></div>
                             Data Karyawan
                         </a>
+                        
                         <a class="nav-link" href="absensi.php">
                             <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
-                            Rekapitulasi Karyawan
+                            Rekap Karyawan
                         </a>
                         <a class="nav-link" href="absensi_tamu.php">
                             <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>
-                            Rekapitulasi Tamu
+                            Rekap Tamu
                         </a>
                         <a class="nav-link" href="absensi_magang.php">
                             <div class="sb-nav-link-icon"><i class="fas fa-graduation-cap"></i></div>
-                            Rekapitulasi Magang
+                            Rekap Magang
                         </a>
                         <a class="nav-link" href="riwayat.php">
                             <div class="sb-nav-link-icon"><i class="fas fa-history"></i></div>
