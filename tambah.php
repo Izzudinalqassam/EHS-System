@@ -1,6 +1,13 @@
 <?php
-error_reporting(0);
-include "koneksi.php"; // Koneksi ke database
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+session_start();
+if (!isset($_SESSION['username'])) {
+    header('Location: login.php');
+    exit();
+}
+include "koneksi.php";
 
 //jika tombol simpan diklik
 if (isset($_POST['btnSimpan'])) {
@@ -9,25 +16,29 @@ if (isset($_POST['btnSimpan'])) {
     $nama    = $_POST['nama'];
     $NIK     = $_POST['NIK'];
     $no_wa   = $_POST['no_wa'];
-    $departmen = $_POST['departmen'];
+    // Determine which department value to use
+    if (isset($_POST['tipeInput']) && $_POST['tipeInput'] === 'ketik') {
+        $departmen = $_POST['departmen_manual'];
+    } else {
+        $departmen = $_POST['departmen'];
+    }
+    $nopol = $_POST['nopol'];
 
     //simpan ke tabel karyawan
-    $simpan = mysqli_query($konek, "INSERT INTO karyawan(nokartu, nama, NIK, no_wa, departmen) VALUES('$nokartu', '$nama', '$NIK', '$no_wa', '$departmen')");
+    $simpan = mysqli_query($konek, "INSERT INTO karyawan(nokartu, nama, NIK, no_wa, departmen, nopol) VALUES('$nokartu', '$nama', '$NIK', '$no_wa', '$departmen', '$nopol')");
 
     //jika berhasil tersimpan, tampilkan pesan Tersimpan
     if ($simpan) {
         $message = "Tersimpan";
+        // Kosongkan tabel temporary pendaftaran
+        mysqli_query($konek, "DELETE FROM tmp_pendaftaran");
     } else {
         $message = "Gagal Tersimpan";
     }
 }
-
-//kosongkan tabel tmprfid
-mysqli_query($konek, "DELETE FROM tmprfid");
-mysqli_query($konek, "DELETE FROM tmprfid2");
-
-
 ?>
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -40,23 +51,23 @@ mysqli_query($konek, "DELETE FROM tmprfid2");
     <link rel="icon" href="image/bp.png" type="image/x-icon">
     <title>Dashboard - SB Admin</title>
     <link href="css/styles.css" rel="stylesheet" />
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/js/all.min.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> <!-- SweetAlert2 -->
     <style>
         body {
             background-image: url('image/inibackground.webp');
-            background-size: cover;
+            
             background-position: center;
             background-repeat: no-repeat;
+            
         }
     </style>
     <script type="text/javascript">
         $(document).ready(function() {
             setInterval(function() {
-                $("#norfid").load('nokartu.php');
-
-            }, 1000); //pembacaan file nokartu.php dan nokartu2.php, tiap 1 detik
+                $("#norfid").load('nokartu_pendaftaran.php');
+            }, 1000);
         });
 
 
@@ -91,59 +102,22 @@ mysqli_query($konek, "DELETE FROM tmprfid2");
                     <i class="fas fa-user fa-fw"></i>
                 </a>
                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
-                    <a class="dropdown-item" href="login.html">Logout</a>
+                    <a class="dropdown-item" href="logout.php">Logout</a>
                 </div>
             </li>
         </ul>
     </nav>
-    <div id="layoutSidenav">
-        <div id="layoutSidenav_nav">
-            <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
-                <div class="sb-sidenav-menu">
-                    <div class="nav">
-                        <div class="sb-sidenav-menu-heading">Core</div>
-                        <a class="nav-link" href="index.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-home"></i></div>
-                            Home
-                        </a>
-                        <a class="nav-link" href="datakaryawan.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-user"></i></div>
-                            Data Karyawan
-                        </a>
-                        <a class="nav-link" href="datatamu.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-user"></i></div>
-                            Data Tamu
-                        </a>
-                        <a class="nav-link" href="absensi.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
-                            Rekap Karyawan
-                        </a>
 
-                        <a class="nav-link" href="absensi_magang.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-graduation-cap"></i></div>
-                            Rekap Magang
-                        </a>
-                        <a class="nav-link" href="riwayat.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-history"></i></div>
-                            Riwayat Absen
-                        </a>
-                        <a class="nav-link" href="scan.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-id-card"></i></div>
-                            Scan Kartu
-                        </a>
-                    </div>
-                </div>
-                <div class="sb-sidenav-footer">
-                    <div class="small">Logged in as:</div>
-                    Start Bootstrap
-                </div>
-            </nav>
-        </div>
+    <body class="sb-nav-fixed">
+    <?php include 'components/navbar.php'; ?>
+    
+    <div id="layoutSidenav">
+    <?php include 'components/sidenav.php'; ?>
         <div id="layoutSidenav_content">
             <div class="container-fluid">
                 <!-- form input -->
                 <form method="POST" class="p-4 rounded shadow-sm" style="background: rgba(0,0,0,0.3); max-width: 600px; margin: auto; color: #fff; backdrop-filter: blur(5px); ">
-                    <h4 class="mb-4">Tambah Data Karyawan</h4>
+                    <h4 class="mb-4">Tambah Data Karyawan & Pemagang</h4>
 
                     <div id="norfid" class="form-group">
                     </div>
@@ -163,34 +137,57 @@ mysqli_query($konek, "DELETE FROM tmprfid2");
                     </div>
 
                     <div class="form-group">
-                        <label for="departmen"><i class="fas fa-briefcase"></i> Department <span class="text-danger">*</span></label>
-                        <input type="text" name="departmen" id="departmen" class="form-control" list="departmen-list" placeholder="Cari Departemen" required>
-                        <datalist id="departmen-list">
-                            <option value="Operation">
-                            <option value="Distribution">
-                            <option value="Warehouse">
-                            <option value="After Sales">
-                            <option value="Maintenance">
-                            <option value="Elektrikal">
-                            <option value="Instrument">
-                            <option value="Engineering">
-                            <option value="CSR">
-                            <option value="Planer">
-                            <option value="Commercial">
-                            <option value="EHS">
-                            <option value="Procurement">
-                            <option value="Accounting">
-                            <option value="HR & GA">
-                            <option value="Finance">
-                            <option value="Fin & Adm">
-                            <option value="IT">
-                            <option value="BOD">
-                            <option value="Niaga & Perencaan">
-                            <option value="Project">
-                            <option value="Distribusi">
-                            <option value="Magang">
-                        </datalist>
+    <label for="departmen"><i class="fas fa-briefcase"></i> Department <span class="text-danger">*</span></label>
+    
+    <!-- Radio buttons untuk memilih jenis input -->
+    <div class="mb-2">
+        <div class="custom-control custom-radio custom-control-inline">
+            <input type="radio" id="pilihdepartmen" name="tipeInput" class="custom-control-input" value="pilih" checked>
+            <label class="custom-control-label" for="pilihdepartmen">Pilih dari daftar</label>
+        </div>
+        <div class="custom-control custom-radio custom-control-inline">
+            <input type="radio" id="ketikdepartmen" name="tipeInput" class="custom-control-input" value="ketik">
+            <label class="custom-control-label" for="ketikdepartmen">Ketik manual</label>
+        </div>
+    </div>
+    
+    <!-- Dropdown select -->
+    <select name="departmen" id="departmen_select" class="form-control" required>
+        <option value="" disabled selected>Pilih departmen</option>
+        <option value="Accounting">Accounting</option>
+        <option value="After Sales">After Sales</option>
+        <option value="BAP">BAP</option>
+        <option value="BOD">BOD</option>
+        <option value="Commercial">Commercial</option>
+        <option value="CSR">CSR</option>
+        <option value="Distribution">Distribution</option>
+        <option value="Distribusi">Distribusi</option>
+        <option value="EHS">EHS</option>
+        <option value="Elektrikal">Elektrikal</option>
+        <option value="Engineering">Engineering</option>
+        <option value="Finance">Finance</option>
+        <option value="Fin & Adm">Fin & Adm</option>
+        <option value="HR & GA">HR & GA</option>
+        <option value="Instrument">Instrument</option>
+        <option value="IT">IT</option>
+        <option value="Magang">Magang</option>
+        <option value="Maintenance">Maintenance</option>
+        <option value="Niaga & Perencaan">Niaga & Perencaan</option>
+        <option value="Operation">Operation</option>
+        <option value="Planer">Planer</option>
+        <option value="Procurement">Procurement</option>
+        <option value="Project">Project</option>
+        <option value="Warehouse">Warehouse</option>
+    </select>
+    <input type="text" name="departmen_manual" id="departmen_manual" class="form-control" placeholder="Ketik nama departmen" style="display: none;">
+    </div>
+                    
+                    <div class="form-group">
+                        <label for="nopol"><i class="fas fa-car"></i> Nopol kendaraan <span class="text-danger">*</span></label>
+                        <input type="text" name="nopol" id="nopol" class="form-control" placeholder="No polisi kendaraan" required>
                     </div>
+
+
 
                     <button class="btn btn-success btn-block mt-4" name="btnSimpan" id="btnSimpan">
                         <i class="fas fa-save"></i> Simpan
@@ -198,23 +195,43 @@ mysqli_query($konek, "DELETE FROM tmprfid2");
                 </form>
 
             </div>
-            <footer class="py-4 bg-light mt-auto">
-                <div class="container-fluid">
-                    <div class="d-flex align-items-center justify-content-between small">
-                        <div class="text-muted">Copyright BP EHS &copy; Dwiyan's and Alka 2024</div>
-                        <div>
-                            <a href="#">Privacy Policy</a>
-                            &middot;
-                            <a href="#">Terms &amp; Conditions</a>
-                        </div>
-                    </div>
-                    <div id="cekkartu"></div>
-                </div>
-            </footer>
+            <!-- Footer -->
+            <?php include 'components/footer.php'; ?>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     <script src="js/scripts.js"></script>
+    <script>
+$(document).ready(function() {
+    // Handler untuk radio buttons
+    $('input[name="tipeInput"]').change(function() {
+        if ($(this).val() === 'pilih') {
+            $('#departmen_select').show().prop('required', true);
+            $('#departmen_manual').hide().prop('required', false).val('');
+        } else {
+            $('#departmen_select').hide().prop('required', false).val('');
+            $('#departmen_manual').show().prop('required', true);
+        }
+    });
+
+    // Handler untuk form submission
+    $('form').submit(function(e) {
+        var selectedType = $('input[name="tipeInput"]:checked').val();
+        var departmenValue = selectedType === 'pilih' ? 
+            $('#departmen_select').val() : 
+            $('#departmen_manual').val();
+        
+        // Set nilai ke hidden input untuk dikirim ke server
+        if (!$('input[name="departmen"]').length) {
+            $('<input>').attr({
+                type: 'hidden',
+                name: 'departmen'
+            }).appendTo('form');
+        }
+        $('input[name="departmen"]').val(departmenValue);
+    });
+});
+</script>
 </body>
 
 </html>

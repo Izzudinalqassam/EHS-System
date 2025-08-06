@@ -1,4 +1,11 @@
 <?php
+session_start();
+if (!isset($_SESSION['username'])) {
+    header('Location: login.php');
+    exit();
+}
+?>
+<?php
 error_reporting(0);
 include "koneksi.php"; // Koneksi ke database
 
@@ -50,6 +57,108 @@ $prev_row = null; // Menyimpan baris sebelumnya untuk menghitung selisih waktu
     <meta name="author" content="" />
     <title>Detail Profil - SB Admin</title>
     <style>
+        .dashboard-header {
+    position: relative;
+    margin: 20px auto 30px;
+    padding: 20px 25px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #3494E6 0%, #EC6EAD 100%);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    color: white;
+    overflow: hidden;
+}
+
+.dashboard-header h2 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 600;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+}
+
+.dashboard-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 80%;
+    height: 200%;
+    background: rgba(255, 255, 255, 0.1);
+    transform: rotate(30deg);
+    z-index: 1;
+}
+
+.dashboard-header .icon {
+    margin-right: 15px;
+    font-size: 1.8rem;
+}
+
+.dashboard-header .user-badge {
+    display: inline-block;
+    margin-left: 15px;
+    padding: 5px 12px;
+    background-color: rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-header {
+        animation: fadeInUp 0.6s ease-out forwards;
+    }
+
+    /* Style untuk cards */
+    .animated-card {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .animated-card.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .card {
+        margin-bottom: 20px;
+        transition: transform 0.2s;
+        border-radius: 10px;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+    }
+
+    /* Animasi untuk konten utama */
+    .main-content-animate {
+        animation: fadeIn 0.8s ease-out forwards;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
     /* CSS untuk mengubah warna latar belakang baris tabel saat cursor melewati */
     table tbody tr:hover {
         background-color: #f2f2f2; /* Ubah warna sesuai kebutuhan */
@@ -62,81 +171,33 @@ $prev_row = null; // Menyimpan baris sebelumnya untuk menghitung selisih waktu
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/js/all.min.js" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/jquery-3.5.1.min.js" crossorigin="anonymous"></script>
     <script src="https://cdn.datatables.net/1.10.20/js/jquery.dataTables.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
     <script src="https://cdn.datatables.net/1.10.20/js/dataTables.bootstrap4.min.js" crossorigin="anonymous"></script>
 </head>
 
 <body class="sb-nav-fixed">
-    <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
-        <a class="navbar-brand" href="index.php">
-            <img src="image/logo bp.png" alt="Logo Perusahaan" style="height: 40px; width: auto; margin-right: 10px;"> SISTEM EHS
-        </a>
-        <button class="btn btn-link btn-sm order-1 order-lg-0" id="sidebarToggle" href="#"><i class="fas fa-bars"></i></button>
-        <ul class="navbar-nav ml-auto ml-md-0">
-            <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" id="userDropdown" href="#" role="button" data-toggle="dropdown"
-                    aria-haspopup="true" aria-expanded="false">
-                    <i class="fas fa-user fa-fw"></i>
-                </a>
-                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
-                    <a class="dropdown-item" href="login.html">Logout</a>
-                </div>
-            </li>
-        </ul>
-    </nav>
+<?php include 'components/navbar.php'; ?>
 
     <div id="layoutSidenav">
-        <div id="layoutSidenav_nav">
-            <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
-                <div class="sb-sidenav-menu">
-                    <div class="nav">
-                        <div class="sb-sidenav-menu-heading">Core</div>
-                        <a class="nav-link" href="index.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-home"></i></div>
-                            Home
-                        </a>
-                        <a class="nav-link" href="datakaryawan.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-user"></i></div>
-                            Data Karyawan
-                        </a>
-                        <a class="nav-link" href="datatamu.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-user"></i></div>
-                            Data Tamu
-                        </a>
-                        <a class="nav-link" href="absensi.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
-                            Rekap Karyawan
-                        </a>
-
-                        <a class="nav-link" href="absensi_magang.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-graduation-cap"></i></div>
-                            Rekap Magang
-                        </a>
-                        <a class="nav-link" href="riwayat.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-history"></i></div>
-                            Riwayat Absen
-                        </a>
-                        <a class="nav-link" href="scan.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-id-card"></i></div>
-                            Scan Kartu
-                        </a>
-                    </div>
-                </div>
-                <div class="sb-sidenav-footer">
-                    <div class="small">Logged in as:</div>
-                    Start Bootstrap
-                </div>
-            </nav>
-        </div>
+    <?php include 'components\sidenav.php'; ?>
 
         <div id="layoutSidenav_content">
             <main>
-                <div class="container-fluid">
-                    <h2 class="mt-4">Detail Profil</h2>
+            <div class="container-fluid main-content-animate">
+                <div class="dashboard-header animate-header">
+            <h2>
+                <i class="fas fa-id-card icon"></i>
+                Detail Profil
+                <?php if ($karyawan): ?>
+                    <span class="user-badge">Nama: <?= htmlspecialchars($karyawan['nama']) ?></span>
+                <?php endif; ?>
+            </h2>
+        </div>
 
                     <?php
                     if ($karyawan) {
                     ?>
-                        <div class='card mb-4'>
+                        <div class='card mb-4 animated-card'>
                             <div class='card-header'>Informasi Profil</div>
                             <div class='card-body'>
                                 <p><strong>NIK:</strong> <?= htmlspecialchars($karyawan['NIK']) ?></p>
@@ -188,7 +249,7 @@ $prev_row = null; // Menyimpan baris sebelumnya untuk menghitung selisih waktu
                             </div>
                         </div>
 
-                        <div class='card mb-4'>
+                        <div class='card mb-4 animated-card'>
                             <div class='card-header'>Riwayat Absensi</div>
                             <div class='card-body'>
                                 <div class="table-responsive">
@@ -198,7 +259,7 @@ $prev_row = null; // Menyimpan baris sebelumnya untuk menghitung selisih waktu
                                                 <th>No</th>
                                                 <th>Tanggal</th>
                                                 <th>Jam Masuk</th>
-                                                <th>Jam Pulang</th>
+                                                <th>Jam keluar</th>
                                                 <th>Lama Waktu IN</th>
                                                 <th>Lama Waktu Out</th>
                                             </tr>
@@ -262,13 +323,7 @@ $prev_row = null; // Menyimpan baris sebelumnya untuk menghitung selisih waktu
                     ?>
                 </div>
             </main>
-            <footer class="py-4 bg-light mt-auto">
-                <div class="container-fluid">
-                    <div class="d-flex align-items-center justify-content-between small">
-                        <div class="text-muted">Copyright &copy; Your Website 2024</div>
-                    </div>
-                </div>
-            </footer>
+            <?php include 'components\footer.php'; ?>
         </div>
     </div>
     <script>
@@ -279,6 +334,18 @@ $prev_row = null; // Menyimpan baris sebelumnya untuk menghitung selisih waktu
             });
         });
     </script>
+        <script src="js/scripts.js"></script>
+        <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animasi kartu
+        const cards = document.querySelectorAll('.animated-card');
+        cards.forEach((card, index) => {
+            setTimeout(() => {
+                card.classList.add('show');
+            }, 100 * (index + 1));
+        });
+    });
+</script>
 </body>
 
 </html>

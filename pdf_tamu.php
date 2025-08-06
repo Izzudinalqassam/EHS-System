@@ -1,117 +1,197 @@
 <?php
-// Include autoload dari dompdf
 require 'libraries/dompdf/autoload.inc.php';
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-// Ambil data logo dari URL
-$path = 'image\jababeka_logo.jpg';
-$type = pathinfo($path, PATHINFO_EXTENSION);
-$data = file_get_contents($path);
-$base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
+date_default_timezone_set('Asia/Jakarta');
 
-
-// Koneksi ke database
+// Koneksi dan pengaturan awal
 include 'koneksi.php';
-
-// Ambil filter date dari URL jika ada
-$filter_date = isset($_GET['filter_date']) ? $_GET['filter_date'] : '';
-
-// Ambil data dari form (dikirim melalui POST)
-if (isset($_POST['filter-date'])) {
-    $filter_date = $_POST['filter-date'];
-}
-
-// Query untuk mengambil data tamu sesuai tanggal yang difilter
-if ($filter_date != '') {
-    $tamuQuery = mysqli_query($konek, "SELECT * FROM karyawan WHERE nama_tamu != '' AND DATE(tanggal_tamu) = '$filter_date'");
-} else {
-    // Jika tidak ada filter, ambil semua data
-    $tamuQuery = mysqli_query($konek, "SELECT * FROM karyawan WHERE nama_tamu != ''");
-}
-
-// Persiapkan output HTML untuk PDF
-$html = '
-    <div style="position: relative;">
-        <div style="background-image: url(' . $base64 . '); 
-                    background-size: contain; 
-                    background-position: center center; 
-                    background-repeat: no-repeat; 
-                    opacity: 0.2; 
-                    position: absolute; 
-                    top: 0; 
-                    left: 0; 
-                    width: 100%; 
-                    height: 100%; 
-                    z-index: -1;"></div>
-        <h1 style="text-align: center;">Data Tamu</h1>
-    </div>';
-
-if ($filter_date != '') {
-    $html .= '<h1 style="text-align: center;">Tanggal: ' . $filter_date . '</h1>'; // Menambahkan tanggal filter di elemen h1
-}
-
-// Cek apakah ada data tamu
-if (mysqli_num_rows($tamuQuery) > 0) {
-    $html .= '
-        
-        <table border="1" cellspacing="0" cellpadding="10" style="width: 100%; border-collapse: collapse;">
-            <thead>
-                <tr>
-                    <th>No</th>
-                    <th>Tanggal</th>
-                    <th>Nama Tamu</th>
-                    <th>Nama Perusahaan</th>
-                    <th>Keperluan</th>
-                    <th>Ingin Bertemu</th>
-                    <th>Jam Masuk</th>
-                    <th>Jam Keluar</th>
-                    <th>Nomor Kendaraan</th>
-                </tr>
-            </thead>
-            <tbody>';
-
-    // Loop untuk menampilkan data tamu dalam tabel
-    $no = 1;
-    while ($row = mysqli_fetch_assoc($tamuQuery)) {
-        $html .= '
-            <tr>
-                <td style="text-align: center;">' . $no . '</td>
-                <td style="text-align: center;">' . $row['tanggal_tamu'] . '</td>
-                <td>' . $row['nama_tamu'] . '</td>
-                <td>' . $row['nama_perusahaan'] . '</td>
-                <td>' . $row['keperluan'] . '</td>
-                <td>' . $row['ingin_bertemu'] . '</td>
-                <td style="text-align: center;">' . $row['jam_masuk_tamu'] . '</td>
-                <td style="text-align: center;">' . $row['jam_keluar_tamu'] . '</td>
-                <td>' . $row['nopol'] . '</td>
-            </tr>';
-        $no++;
-    }
-
-    $html .= '
-            </tbody>
-        </table>';
-} else {
-    // Jika tidak ada data, tampilkan pesan
-    $html .= '<h3 style="text-align: center; color: red;">Tidak ada data tamu di tanggal ini.</h3>';
-}
-
-// Inisialisasi DOMPDF dengan opsi
 $options = new Options();
 $options->set('isHtml5ParserEnabled', true);
 $options->set('isRemoteEnabled', true);
 $dompdf = new Dompdf($options);
 
-// Muat HTML ke dalam DOMPDF
+// Ambil filter date range
+$filter_date_start = isset($_GET['filter_date_start']) ? $_GET['filter_date_start'] : date('Y-m-d');
+$filter_date_end = isset($_GET['filter_date_end']) ? $_GET['filter_date_end'] : date('Y-m-d');
+
+// Format tanggal untuk display
+$date_display = '';
+if ($filter_date_start == $filter_date_end) {
+    $date_display = date('d-m-Y', strtotime($filter_date_start));
+} else {
+    $date_display = date('d-m-Y', strtotime($filter_date_start)) . ' s/d ' . date('d-m-Y', strtotime($filter_date_end));
+}
+
+// Query untuk summary
+$totalTamuQuery = mysqli_query($konek, "SELECT SUM(jumlah_tamu) as total FROM tamu WHERE jumlah_tamu != '' AND jam_keluar_tamu = '00:00:00' AND tanggal_tamu BETWEEN '$filter_date_start' AND '$filter_date_end'");
+$totalTamu = mysqli_fetch_assoc($totalTamuQuery)['total'] ?? 0;
+
+$totalKeluarQuery = mysqli_query($konek, "SELECT SUM(jumlah_tamu) as total_keluar FROM tamu WHERE jam_keluar_tamu != '00:00:00' AND tanggal_tamu BETWEEN '$filter_date_start' AND '$filter_date_end'");
+$totalKeluar = mysqli_fetch_assoc($totalKeluarQuery)['total_keluar'] ?? 0;
+
+// Query untuk data tamu
+$tamuQuery = mysqli_query($konek, "SELECT * FROM tamu WHERE tanggal_tamu BETWEEN '$filter_date_start' AND '$filter_date_end' ORDER BY tanggal_tamu DESC, jam_masuk_tamu DESC");
+
+// Style HTML
+$html = '
+<style>
+    body { 
+        font-family: Arial, sans-serif;
+        font-size: 11pt;
+        margin: 15px;
+    }
+    .header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .header h2 {
+        margin: 5px 0;
+    }
+    .header h3 {
+        margin: 5px 0;
+        color: #444;
+    }
+    .header p {
+        margin: 5px 0;
+        font-size: 10pt;
+    }
+    .summary-box {
+        margin: 15px 0;
+        padding: 10px;
+        border: 1px solid #ddd;
+        background-color: #f9f9f9;
+        border-radius: 5px;
+    }
+    .summary-item {
+        margin: 5px 0;
+        font-size: 10pt;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+        font-size: 9pt;
+    }
+    th, td {
+        border: 0.5px solid #ddd;
+        padding: 5px;
+    }
+    th {
+        background-color: #f5f5f5;
+        font-weight: bold;
+        text-align: center;
+        vertical-align: middle;
+    }
+    td {
+        vertical-align: top;
+    }
+    .timestamp {
+        font-size: 8pt;
+        text-align: right;
+        color: #666;
+        margin-top: 10px;
+    }
+    .footer {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        text-align: center;
+        font-size: 8pt;
+        border-top: 1px solid #ddd;
+        padding-top: 5px;
+    }
+    .status-in {
+        color: green;
+        font-weight: bold;
+    }
+    .status-out {
+        color: red;
+        font-weight: bold;
+    }
+    .page-number {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        text-align: center;
+        font-size: 8pt;
+    }
+    .page-break {
+        page-break-before: always;
+    }
+</style>
+
+<div class="header">
+    <h2>LAPORAN DATA TAMU</h2>
+    <h3>PT. Bekasi Power - Departemen EHS</h3>
+    <p>Periode: ' . $date_display . '</p>
+</div>
+
+<div class="summary-box">
+    <div class="summary-item">
+        <strong>Total Tamu Masih Ada:</strong> ' . ($totalTamu ?: 0) . ' orang
+    </div>
+    <div class="summary-item">
+        <strong>Total Tamu Sudah Keluar:</strong> ' . ($totalKeluar ?: 0) . ' orang
+    </div>
+    <div class="summary-item">
+        <strong>Total Keseluruhan:</strong> ' . (($totalTamu ?: 0) + ($totalKeluar ?: 0)) . ' orang
+    </div>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th width="4%">No</th>
+            <th width="8%">Tanggal</th>
+            <th width="11%">Nama</th>
+            <th width="13%">Perusahaan</th>
+            <th width="4%">Jml</th>
+            <th width="18%">Keperluan</th>
+            <th width="11%">Bertemu</th>
+            <th width="9%">No. Kendaraan</th>
+            <th width="6%">Masuk</th>
+            <th width="6%">Keluar</th>
+            <th width="10%">Status</th>
+        </tr>
+    </thead>
+    <tbody>';
+
+$no = 1;
+while ($row = mysqli_fetch_assoc($tamuQuery)) {
+    $status = $row['jam_keluar_tamu'] != '00:00:00' ? 
+        '<span class="status-out">Keluar</span>' : 
+        '<span class="status-in">Masuk</span>';
+    
+    $html .= '<tr>
+        <td align="center">' . $no++ . '</td>
+        <td align="center">' . date('d/m/Y', strtotime($row['tanggal_tamu'])) . '</td>
+        <td>' . $row['nama_tamu'] . '</td>
+        <td>' . $row['nama_perusahaan'] . '</td>
+        <td align="center">' . $row['jumlah_tamu'] . '</td>
+        <td>' . $row['keperluan'] . '</td>
+        <td>' . $row['ingin_bertemu'] . '</td>
+        <td align="center">' . $row['nopol'] . '</td>
+        <td align="center" class="status-in">' . $row['jam_masuk_tamu'] . '</td>
+        <td align="center" class="status-out">' . ($row['jam_keluar_tamu'] != '00:00:00' ? $row['jam_keluar_tamu'] : '-') . '</td>
+        <td align="center">' . $status . '</td>
+    </tr>';
+}
+
+$html .= '</tbody></table>
+<div class="timestamp">Dicetak pada: ' . date('d-m-Y H:i:s') . '</div>
+<div class="footer">PT. Bekasi Power - Departemen EHS - ' . date('Y') . '</div>';
+
 $dompdf->loadHtml($html);
-
-// Set ukuran dan orientasi kertas
 $dompdf->setPaper('A4', 'portrait');
-
-// Render PDF
 $dompdf->render();
+// Generate filename based on date range
+$filename = "laporan_tamu_" . $filter_date_start;
+if ($filter_date_start != $filter_date_end) {
+    $filename .= "_sampai_" . $filter_date_end;
+}
+$filename .= ".pdf";
 
-// Output PDF ke browser
-$dompdf->stream("data_tamu.pdf", array("Attachment" => 0));
+$dompdf->stream($filename, array("Attachment" => 0));
 ?>

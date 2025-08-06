@@ -14,7 +14,7 @@ curl_setopt_array($curl, array(
     'message' => 'Ada tamu baru yang ingin bertemu dengan Anda di Sistem EHS.',
   ),
   CURLOPT_HTTPHEADER => array(
-    'Authorization: Y4guD@NHqj9Has9n7R_g' // Token API
+    'Authorization: DLoWVqiLxo46AJLPEBuy' // Token API
   ),
 ));
 

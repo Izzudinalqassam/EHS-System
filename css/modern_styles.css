@@ -1,0 +1,86 @@
+/* General Styles */
+body {
+    background-color: var(--bs-light);
+    color: var(--bs-dark);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* Dark Mode */
+[data-bs-theme="dark"] body {
+    --bs-light: #1a1a1a;
+    --bs-dark: #ffffff;
+    --bs-body-bg: #1a1a1a;
+    --bs-body-color: #ffffff;
+}
+
+[data-bs-theme="dark"] .card {
+    background-color: #2a2a2a;
+    border-color: #444;
+}
+
+[data-bs-theme="dark"] .card-title, [data-bs-theme="dark"] .card-body, [data-bs-theme="dark"] h1, [data-bs-theme="dark"] h2, [data-bs-theme="dark"] .small {
+    color: #ffffff;
+}
+
+[data-bs-theme="dark"] .dashboard-header {
+    background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);
+}
+
+/* Modern Styles */
+.dashboard-header {
+    position: relative;
+    margin: 20px auto 40px;
+    padding: 25px 30px;
+    border-radius: 15px;
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    color: white;
+    overflow: hidden;
+    text-align: left;
+}
+
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+}
+
+.chart-container {
+    position: relative;
+    height: 40vh;
+    width: 100%;
+    margin: 20px 0;
+    padding: 20px;
+    background: var(--bs-light);
+    border-radius: 15px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary {
+    background-color: #6a11cb;
+    border-color: #6a11cb;
+}
+
+.btn-primary:hover {
+    background-color: #5a0fb1;
+    border-color: #5a0fb1;
+}
+
+.role-badge {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 5px 15px;
+    background-color: rgba(255, 255, 255, 0.25);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    backdrop-filter: blur(5px);
+    position: relative;
+    z-index: 2;
+}

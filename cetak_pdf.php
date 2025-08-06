@@ -1,114 +1,189 @@
 <?php
-// Load library Dompdf
-require 'libraries/dompdf/autoload.inc.php';
 
+require 'libraries/dompdf/autoload.inc.php';
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-// Set opsi agar tidak ada margin (full page)
+// Set timezone dan tambahkan offset 7 jam untuk WIB
+date_default_timezone_set('Asia/Jakarta');
+$current_datetime = date('d-m-Y H:i:s');
+
 $options = new Options();
 $options->set('isHtml5ParserEnabled', true);
-$options->set('isRemoteEnabled', true);
-
-// Membuat objek Dompdf dengan opsi
 $dompdf = new Dompdf($options);
-
-// Koneksi database
 include "koneksi.php";
 
-// Ambil data logo dari URL
-$path = 'image\jababeka_logo.jpg';
-$type = pathinfo($path, PATHINFO_EXTENSION);
-$data = file_get_contents($path);
-$base64 = 'data:image/' . $type . ';base64,' . base64_encode($data);
-
-// Ambil data dari form (dikirim melalui POST)
-$filter_date = isset($_POST['filter-date']) ? $_POST['filter-date'] : '';
+// Get filter values from form submission
+$filter_date_start = isset($_POST['filter-date-start']) ? $_POST['filter-date-start'] : date('Y-m-d');
+$filter_date_end = isset($_POST['filter-date-end']) ? $_POST['filter-date-end'] : date('Y-m-d');
 $filter_department = isset($_POST['filter-department']) ? $_POST['filter-department'] : '';
 
-// Query untuk menampilkan data berdasarkan filter
-$sql = "SELECT a.tanggal, b.NIK, b.nama, b.departmen, a.jam_masuk, a.jam_pulang 
-        FROM absensi a 
-        JOIN karyawan b ON a.nokartu = b.nokartu 
-        WHERE b.departmen != '' AND b.departmen IS NOT NULL";
+// Format dates for display
+$date_start_display = date('d-m-Y', strtotime($filter_date_start));
+$date_end_display = date('d-m-Y', strtotime($filter_date_end));
+$period_text = ($filter_date_start == $filter_date_end) ? $date_start_display : $date_start_display . ' s/d ' . $date_end_display;
 
-// Filter berdasarkan tanggal jika ada
-if (!empty($filter_date)) {
-    $sql .= " AND a.tanggal = '$filter_date'";
-}
+// Buat variabel waktu yang akan digunakan
+$current_datetime = date('d-m-Y H:i:s');
 
-// Filter berdasarkan departemen jika ada
-if (!empty($filter_department)) {
-    $sql .= " AND b.departmen = '$filter_department'";
-}
-
-$result = mysqli_query($konek, $sql);
-
-// Bangun HTML untuk PDF
+// Style
 $html = '<style>
-            body { margin: 0; padding: 0; }
-            table { width: 100%; border-collapse: collapse; }
-            th, td { border: 1px solid black; padding: 5px; text-align: center; }
-         </style>';
-$html .= '<div style="position: relative;">
-        <div style="background-image: url(' . $base64 . '); 
-                    background-size: contain; 
-                    background-position: center center; 
-                    background-repeat: no-repeat; 
-                    opacity: 0.2; 
-                    position: absolute; 
-                    top: 0; 
-                    left: 0; 
-                    width: 100%; 
-                    height: 100%; 
-                    z-index: -1;"></div>
-        <h1 style="text-align: center;">Riwayat Absensi</h1>
-    </div>
-<h3 style="text-align: center;">Riwayat Absensi ' . date('d-m-Y', time() + (7 * 60 * 60)) . '</h3>';
-$html .= '<table>';
-$html .= '<thead>';
-$html .= '<tr>
-            <th>No</th>
-            <th>Tanggal</th>
-            <th>NIK</th>
-            <th>Nama</th>
-            <th>Departemen</th>
-            <th>Jam Masuk</th>
-            <th>Jam Keluar</th>
-         </tr>';
-$html .= '</thead>';
-$html .= '<tbody>';
+            body { 
+                font-family: Arial, sans-serif; 
+                margin: 20px;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+            table { 
+                width: 100%; 
+                border-collapse: collapse; 
+                margin-bottom: 20px; 
+            }
+            th, td { 
+                border: 1px solid black; 
+                padding: 8px; 
+                text-align: left; 
+                font-size: 12px; 
+            }
+            th { 
+                background-color: #f0f0f0; 
+                text-align: center; 
+            }
+            .department-header { 
+                background-color: #e6e6e6;
+                padding: 10px;
+                margin: 10px 0;
+                font-weight: bold;
+                border: 1px solid #ddd;
+                text-align: center;
+                font-size: 16px;
+            }
+            h1, h3 { 
+                text-align: center; 
+                color: #333;
+            }
+            .summary-table { 
+                margin: 20px 0;
+                width: 50%;
+                margin-left: auto;
+                margin-right: auto;
+            }
+            .summary-table th {
+                background-color: #4a4a4a;
+                color: white;
+            }
+            .total-row {
+                background-color: #f8f8f8;
+                font-weight: bold;
+            }
+            .timestamp {
+                text-align: right;
+                font-size: 10px;
+                color: #666;
+                margin-bottom: 20px;
+            }
+            .footer {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                text-align: center;
+                font-size: 10px;
+                padding: 10px;
+                border-top: 1px solid #ddd;
+            }
+        </style>';
 
-// Cek apakah ada data yang ditemukan
-if (mysqli_num_rows($result) > 0) {
+// Build the main SQL query with date range and department filtering
+$sql = "SELECT a.*, b.NIK, b.nama, b.departmen 
+        FROM absensi a 
+        JOIN karyawan b ON a.nokartu = b.nokartu
+        WHERE (
+            (a.tanggal BETWEEN ? AND ?) -- date range filter
+            OR (a.jam_pulang = '00:00:00' AND a.tanggal < ? AND a.tanggal >= ?) -- belum tap out dalam range
+            OR (DATE(a.last_update) BETWEEN ? AND ? AND a.jam_pulang != '00:00:00') -- tap out dalam range
+        )
+        AND b.departmen NOT IN ('tamu')";
+
+// Add department filter if selected
+$params = [$filter_date_start, $filter_date_end, $filter_date_end, $filter_date_start, $filter_date_start, $filter_date_end];
+$param_types = "ssssss";
+
+if (!empty($filter_department)) {
+    $sql .= " AND b.departmen = ?";
+    $params[] = $filter_department;
+    $param_types .= "s";
+}
+
+$sql .= " ORDER BY b.departmen, b.nama, a.tanggal DESC, a.last_update DESC";
+
+// Prepare and execute query
+$stmt = mysqli_prepare($konek, $sql);
+mysqli_stmt_bind_param($stmt, $param_types, ...$params);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
+
+// Generate PDF content
+$html .= '<h1>LAPORAN RIWAYAT ABSENSI</h1>';
+$html .= '<div class="department-header">Periode: ' . $period_text . '</div>';
+if (!empty($filter_department)) {
+    $html .= '<div class="department-header">Departemen: ' . $filter_department . '</div>';
+}
+$html .= '<div class="timestamp">Generated on: ' . $current_datetime . '</div>';
+
+// Create attendance table
+$html .= '<table>
+            <thead><tr>
+                <th width="5%">No</th>
+                <th width="12%">Tanggal</th>
+                <th width="12%">NIK</th>
+                <th width="25%">Nama</th>
+                <th width="15%">Departemen</th>
+                <th width="12%">Jam Masuk</th>
+                <th width="12%">Jam Keluar</th>
+                <th width="7%">Status</th>
+            </tr></thead><tbody>';
+
+if ($result && mysqli_num_rows($result) > 0) {
     $no = 1;
     while ($row = mysqli_fetch_assoc($result)) {
-        $html .= '<tr>';
-        $html .= '<td>' . $no . '</td>';
-        $html .= '<td>' . $row['tanggal'] . '</td>';
-        $html .= '<td>' . $row['NIK'] . '</td>';
-        $html .= '<td>' . $row['nama'] . '</td>';
-        $html .= '<td>' . $row['departmen'] . '</td>';
-        $html .= '<td>' . $row['jam_masuk'] . '</td>';
-        $html .= '<td>' . $row['jam_pulang'] . '</td>';
-        $html .= '</tr>';
-        $no++;
+        $status_color = ($row['status'] == 'IN') ? 'color: green;' : 'color: red;';
+        $jam_keluar = ($row['jam_pulang'] == '00:00:00') ? '-' : $row['jam_pulang'];
+        
+        $html .= '<tr>
+                    <td align="center">' . $no++ . '</td>
+                    <td align="center">' . date('d-m-Y', strtotime($row['tanggal'])) . '</td>
+                    <td>' . $row['NIK'] . '</td>
+                    <td>' . $row['nama'] . '</td>
+                    <td>' . $row['departmen'] . '</td>
+                    <td align="center" style="color: green; font-weight: bold;">' . $row['jam_masuk'] . '</td>
+                    <td align="center" style="color: red; font-weight: bold;">' . $jam_keluar . '</td>
+                    <td align="center" style="' . $status_color . ' font-weight: bold;">' . $row['status'] . '</td>
+                  </tr>';
     }
 } else {
-    // Jika tidak ada data, tampilkan pesan
-    $html .= '<tr><td colspan="7"><h3 style="text-align: center; color: red;">Tidak ada data Absen di tanggal ini.</h3></td></tr>';
+    $html .= '<tr><td colspan="8" align="center">Tidak ada data absensi untuk periode yang dipilih</td></tr>';
 }
 
 $html .= '</tbody></table>';
 
-// Masukkan HTML ke Dompdf
+// Footer
+$html .= '<div class="footer">PT. Bekasi Power - Departemen EHS - ' . date('Y') . '</div>';
+
 $dompdf->loadHtml($html);
-
-// Atur ukuran dan orientasi kertas, serta margin 0
 $dompdf->setPaper('A4', 'portrait');
-
-// Render HTML ke PDF
 $dompdf->render();
 
-// Output PDF
-$dompdf->stream("riwayat_absensi.pdf", ["Attachment" => false]);
+// Generate filename with date range
+$filename = "riwayat_absensi_" . str_replace('-', '', $filter_date_start);
+if ($filter_date_start != $filter_date_end) {
+    $filename .= "_" . str_replace('-', '', $filter_date_end);
+}
+if (!empty($filter_department)) {
+    $filename .= "_" . str_replace(' ', '_', $filter_department);
+}
+$filename .= ".pdf";
+
+$dompdf->stream($filename, array("Attachment" => 0));
+?>

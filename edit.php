@@ -17,9 +17,9 @@ if (isset($_POST['btnSimpan'])) {
     $nama = $_POST['nama'];
     $departmen = $_POST['departmen'];
     $no_wa = $_POST['no_wa']; // Baca no_hp (no_wa)
-
+    $nopol = $_POST['nopol']; 
     // Simpan ke tabel karyawan
-    $update = mysqli_query($konek, "UPDATE karyawan SET nokartu='$nokartu', nik='$nik', nama='$nama', departmen='$departmen', no_wa='$no_wa' WHERE id='$id'");
+    $update = mysqli_query($konek, "UPDATE karyawan SET nokartu='$nokartu', nik='$nik', nama='$nama', departmen='$departmen', no_wa='$no_wa', nopol='$nopol' WHERE id='$id'");
 
     if ($update) {
         $message = "Tersimpan";
@@ -44,6 +44,7 @@ if (isset($_POST['btnSimpan'])) {
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/js/all.min.js" crossorigin="anonymous"></script>
     <script type="text/javascript">
+        
         // Menampilkan popup setelah halaman dimuat
         <?php if (isset($message)): ?>
             $(document).ready(function() {
@@ -61,7 +62,14 @@ if (isset($_POST['btnSimpan'])) {
         <?php endif; ?>
     </script>
 </head>
-
+<style>
+        body {
+            background-image: url('image/inibackground.webp');
+            
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+    </style>
 <body class="sb-nav-fixed">
     <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
         <a class="navbar-brand" href="index.php">SISTEM EHS</a>
@@ -77,51 +85,10 @@ if (isset($_POST['btnSimpan'])) {
         </ul>
     </nav>
     <div id="layoutSidenav">
-        <div id="layoutSidenav_nav">
-            <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
-                <div class="sb-sidenav-menu">
-                    <div class="nav">
-                        <div class="sb-sidenav-menu-heading">Core</div>
-                        <a class="nav-link" href="index.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-home"></i></div>
-                            Home
-                        </a>
-                        <a class="nav-link" href="datakaryawan.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-user"></i></div>
-                            Data Karyawan
-                        </a>
-                        <a class="nav-link" href="datatamu.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-user"></i></div>
-                            Data Tamu
-                        </a>
-                        <a class="nav-link" href="absensi.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
-                            Rekap Karyawan
-                        </a>
-
-                        <a class="nav-link" href="absensi_magang.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-graduation-cap"></i></div>
-                            Rekap Magang
-                        </a>
-                        <a class="nav-link" href="riwayat.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-history"></i></div>
-                            Riwayat Absen
-                        </a>
-                        <a class="nav-link" href="scan.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-id-card"></i></div>
-                            Scan Kartu
-                        </a>
-                    </div>
-                </div>
-                <div class="sb-sidenav-footer">
-                    <div class="small">Logged in as:</div>
-                    Start Bootstrap
-                </div>
-            </nav>
-        </div>
+    <?php include 'components\sidenav.php'; ?>
         <div id="layoutSidenav_content">
             <div class="container-fluid">
-                <form method="POST" class="bg-white p-4 rounded shadow-sm" style="max-width: 600px; margin: auto;">
+            <form method="POST" class="p-4 rounded shadow-sm" style="background: rgba(0,0,0,0.3); max-width: 600px; margin: auto; color: #fff; backdrop-filter: blur(5px); ">
                     <h4 class="mb-4">Edit Data Karyawan</h4>
                     <div class="form-group">
                         <label for="nokartu"><i class="fas fa-id-card"></i> No. Kartu <span class="text-danger">*</span></label>
@@ -137,36 +104,41 @@ if (isset($_POST['btnSimpan'])) {
                     </div>
                     <div class="form-group">
                         <label for="departmen"><i class="fas fa-briefcase"></i> Department <span class="text-danger">*</span></label>
-                        <input type="text" name="departmen" id="departmen" class="form-control" list="departmen-list" value="<?= htmlspecialchars($data['departmen']); ?>" required>
-                        <datalist id="departmen-list">
-                            <option value="Operation">
-                            <option value="Distribution">
-                            <option value="Warehouse">
-                            <option value="After Sales">
-                            <option value="Maintenance">
-                            <option value="Elektrikal">
-                            <option value="Instrument">
-                            <option value="Engineering">
-                            <option value="CSR">
-                            <option value="Planer">
-                            <option value="Commercial">
-                            <option value="EHS">
-                            <option value="Procurement">
-                            <option value="Accounting">
-                            <option value="HR & GA">
-                            <option value="Finance">
-                            <option value="Fin & Adm">
-                            <option value="IT">
-                            <option value="BOD">
-                            <option value="Niaga & Perencaan">
-                            <option value="Project">
-                            <option value="Distribusi">
-                            <option value="Magang">
-                        </datalist>
+                        <select name="departmen" id="departmen" class="form-control" required>
+                            <option value="" disabled selected>Pilih Departemen</option>
+                            <option value="Accounting">Accounting</option>
+                            <option value="After Sales">After Sales</option>
+                            <option value="BAP">BAP</option>
+                            <option value="BOD">BOD</option>
+                            <option value="Commercial">Commercial</option>
+                            <option value="CSR">CSR</option>
+                            <option value="Distribution">Distribution</option>
+                            <option value="Distribusi">Distribusi</option>
+                            <option value="EHS">EHS</option>
+                            <option value="Elektrikal">Elektrikal</option>
+                            <option value="Engineering">Engineering</option>
+                            <option value="Finance">Finance</option>
+                            <option value="Fin & Adm">Fin & Adm</option>
+                            <option value="HR & GA">HR & GA</option>
+                            <option value="Instrument">Instrument</option>
+                            <option value="IT">IT</option>
+                            <option value="Magang">Magang</option>
+                            <option value="Maintenance">Maintenance</option>
+                            <option value="Niaga & Perencaan">Niaga & Perencaan</option>
+                            <option value="Operation">Operation</option>
+                            <option value="Planer">Planer</option>
+                            <option value="Procurement">Procurement</option>
+                            <option value="Project">Project</option>
+                            <option value="Warehouse">Warehouse</option>
+                        </select>
                     </div>
                     <div class="form-group">
-                        <label for="no_wa"><i class="fas fa-phone"></i> No HP <span class="text-danger">*</span></label>
+                        <label for="no_wa"><i class="fas fa-phone"></i> No HP <span class="text-danger"></span></label>
                         <input type="text" name="no_wa" id="no_wa" class="form-control" value="<?= htmlspecialchars($data['no_wa']); ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nopol"><i class="fas fa-car"></i> Nomor Kendaraan <span class="text-danger"></span></label>
+                        <input type="text" name="nopol" id="nopol" class="form-control" value="<?= htmlspecialchars($data['nopol']); ?>" required>
                     </div>
 
                     <button class="btn btn-success btn-block mt-4" name="btnSimpan" id="btnSimpan">
@@ -174,19 +146,7 @@ if (isset($_POST['btnSimpan'])) {
                     </button>
                 </form>
             </div>
-            <footer class="py-4 bg-light mt-auto">
-                <div class="container-fluid">
-                    <div class="d-flex align-items-center justify-content-between small">
-                        <div class="text-muted">Copyright BP EHS &copy; Dwiyan's and Alka 2024</div>
-                        <div>
-                            <a href="#">Privacy Policy</a>
-                            &middot;
-                            <a href="#">Terms &amp; Conditions</a>
-                        </div>
-                    </div>
-                    <div id="cekkartu"></div>
-                </div>
-            </footer>
+            <?php include 'components\footer.php'; ?>
         </div>
     </div>
 
