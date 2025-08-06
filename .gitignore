@@ -1,0 +1,64 @@
+# Google Cloud Service Account Credentials
+*.json
+tamu-*.json
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Database credentials
+koneksi.php
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Composer
+/vendor/
+composer.lock
+
+# Node modules (if any)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Cache
+cache/
+*.cache
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Upload directories
+uploads/
+files/
+
+# Session files
+sessions/
+
+# Configuration files with sensitive data
+config.php
+settings.php
