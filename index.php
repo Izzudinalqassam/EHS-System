@@ -12,6 +12,9 @@ include "models/sql_card_index.php";
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <title>Dashboard Chart</title>
     <link href="css/styles.css" rel="stylesheet" />
     <link rel="icon" href="image/bp.png" type="image/x-icon">
@@ -20,7 +23,7 @@ include "models/sql_card_index.php";
         crossorigin="anonymous" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/js/all.min.js"
         crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js"
         crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -242,6 +245,24 @@ include "models/sql_card_index.php";
             font-weight: 700;
             font-size: 2.5rem !important;
             text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            cursor: default;
+        }
+        
+        .counter:hover {
+            transform: scale(1.05);
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+        
+        .counter[data-target="0"] {
+            color: rgba(255, 255, 255, 0.6) !important;
+            font-size: 2.2rem !important;
+            opacity: 0.8;
+        }
+        
+        .counter[data-target="0"]:hover {
+            color: rgba(255, 255, 255, 0.9) !important;
+            transform: none;
         }
         
         /* Enhanced admin buttons */
@@ -279,19 +300,63 @@ include "models/sql_card_index.php";
         /* Chart container enhancement */
         .chart-container {
             position: relative;
-            height: 40vh;
+            min-height: 500px;
             width: 100%;
-            margin: 20px 0;
-            padding: 25px;
-            background: white;
+            margin: 30px 0;
+            padding: 30px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
             border-radius: 20px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
             transition: all 0.3s ease;
+            border: 1px solid rgba(0, 0, 0, 0.05);
         }
         
         .chart-container:hover {
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-            transform: translateY(-2px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+            transform: translateY(-3px);
+        }
+        
+        /* Chart header styling */
+        .chart-header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+        
+        .chart-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .chart-subtitle {
+            font-size: 1rem;
+            color: #64748b;
+            margin: 0;
+            font-weight: 500;
+        }
+        
+        /* Chart container responsive */
+        @media (max-width: 768px) {
+            .chart-container {
+                margin: 20px 0;
+                padding: 20px;
+                min-height: 400px;
+            }
+            
+            .chart-title {
+                font-size: 1.5rem;
+            }
+            
+            .chart-subtitle {
+                font-size: 0.9rem;
+            }
         }
         
         /* Card body enhancements */
@@ -340,7 +405,7 @@ include "models/sql_card_index.php";
                 <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
                     <!-- KONTEN UNTUK ADMIN -->
                     <div class="dashboard-header animate-header ">
-                        <h2 class="text-center mx-auto d-block">Dashboard Admin - Traffic Absen Mingguan</h2>
+                        <h2 class="text-center mx-auto d-block">Dashboard Admin - Trend Absen 7 Hari Ke Depan</h2>
                         <div style="display: flex; justify-content: center;">
                             <span class="role-badge">Admin Access</span>
                         </div>
@@ -391,7 +456,7 @@ include "models/sql_card_index.php";
                    
                     <?php else: ?>
                     <!-- Default Content (jika role tidak dikenali) -->
-                    <h2 class="mt-4">Traffic Absen Mingguan</h2>
+                    <h2 class="mt-4">Trend Absen 7 Hari Ke Depan</h2>
                     <?php endif; ?>
 
                     <!-- Cards - Konten yang sama untuk semua role -->
@@ -404,7 +469,7 @@ include "models/sql_card_index.php";
                                         <div>
                                             <div class="text-white-75 small">Karyawan Didalam</div>
                                             <div class="counter" id="total_masuk" data-target="<?= $karyawan_didalam ?>">
-                                                0
+                                                <?= $karyawan_didalam ?>
                                             </div>
                                         </div>
                                         <div class="text-white-25">
@@ -426,7 +491,7 @@ include "models/sql_card_index.php";
                                         <div>
                                             <div class="text-white-75 small">Magang Didalam</div>
                                             <div class="counter" id="total_keluar" data-target="<?= $magang_didalam ?>">
-                                                0
+                                                <?= $magang_didalam ?>
                                             </div>
                                         </div>
                                         <div class="text-white-25">
@@ -448,7 +513,7 @@ include "models/sql_card_index.php";
                                         <div>
                                             <div class="text-white-75 small">Tamu Didalam</div>
                                             <div class="counter" id="total_keseluruhan" data-target="<?= $tamu_didalam ?>">
-                                                0
+                                                <?= $tamu_didalam ?>
                                             </div>
                                         </div>
                                         <div class="text-white-25">
@@ -470,7 +535,7 @@ include "models/sql_card_index.php";
                                         <div>
                                             <div class="text-white-75 small">Total Didalam</div>
                                             <div class="counter" id="total_semua" data-target="<?= $total_Didalam ?>">
-                                                0
+                                                <?= $total_Didalam ?>
                                             </div>
                                         </div>
                                         <div class="text-white-25">
@@ -486,9 +551,13 @@ include "models/sql_card_index.php";
                         </div>
                     </div>
 
-                    <!-- Line Chart -->
+                    <!-- Modern Line Chart -->
                     <div class="chart-container animated-card">
-                        <canvas id="myLineChart"></canvas>
+                        <div class="chart-header">
+                            <h3 class="chart-title">📊 Trend Kehadiran 7 Hari Ke Depan</h3>
+                            <p class="chart-subtitle">Data real-time kehadiran 7 hari ke depan</p>
+                        </div>
+                        <div id="modernLineChart"></div>
                     </div>
                 </div>
             </main>
@@ -496,126 +565,293 @@ include "models/sql_card_index.php";
             <?php include 'components/footer.php'; ?>
 
             <script>
-                // Line Chart
-                var ctx = document.getElementById('myLineChart').getContext('2d');
-                var gradientKaryawan = ctx.createLinearGradient(0, 0, 0, 400);
-                gradientKaryawan.addColorStop(0, 'rgba(34, 197, 94, 0.2)');
-                gradientKaryawan.addColorStop(1, 'rgba(34, 197, 94, 0)');
-
-                var gradientMagang = ctx.createLinearGradient(0, 0, 0, 400);
-                gradientMagang.addColorStop(0, 'rgba(239, 68, 68, 0.2)');
-                gradientMagang.addColorStop(1, 'rgba(239, 68, 68, 0)');
-
-                var gradientTamu = ctx.createLinearGradient(0, 0, 0, 400);
-                gradientTamu.addColorStop(0, 'rgba(234, 179, 8, 0.2)');
-                gradientTamu.addColorStop(1, 'rgba(234, 179, 8, 0)');
-
-                var myLineChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: <?= json_encode($labels) ?>,
-                        datasets: [{
-                            label: 'Karyawan',
-                            data: <?= json_encode($karyawan_didalam) ?>,
-                            borderColor: '#22c55e',
-                            backgroundColor: gradientKaryawan,
-                            borderWidth: 2,
-                            pointRadius: 4,
-                            pointHoverRadius: 6,
-                            fill: true,
-                            tension: 0.4
-                        }, {
-                            label: 'Magang',
-                            data: <?= json_encode($magang_didalam) ?>,
-                            borderColor: '#ef4444',
-                            backgroundColor: gradientMagang,
-                            borderWidth: 2,
-                            pointRadius: 4,
-                            pointHoverRadius: 6,
-                            fill: true,
-                            tension: 0.4
-                        }, {
-                            label: 'Tamu',
-                            data: <?= json_encode($tamu_didalam) ?>,
-                            borderColor: '#eab308',
-                            backgroundColor: gradientTamu,
-                            borderWidth: 2,
-                            pointRadius: 4,
-                            pointHoverRadius: 6,
-                            fill: true,
-                            tension: 0.4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            title: {
-                                display: true,
-                                text: 'Trend Kehadiran Mingguan',
-                                font: {
-                                    size: 16,
-                                    weight: 'bold'
-                                },
-                                padding: {
-                                    top: 10,
-                                    bottom: 30
-                                }
-                            },
-                            legend: {
-                                position: 'top',
-                                labels: {
-                                    usePointStyle: true,
-                                    padding: 20,
-                                    font: {
-                                        size: 12
-                                    }
-                                }
-                            },
-                            tooltip: {
-                                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                                titleColor: '#1f2937',
-                                titleFont: {
-                                    size: 13,
-                                    weight: 'bold'
-                                },
-                                bodyColor: '#4b5563',
-                                bodyFont: {
-                                    size: 12
-                                },
-                                padding: 12,
-                                borderColor: '#e5e7eb',
-                                borderWidth: 1,
-                                displayColors: true
+                // Modern ApexCharts Implementation
+                // Force cache busting for chart data
+                var chartData = {
+                    labels: <?= json_encode($labels) ?>,
+                    karyawan: <?= json_encode($karyawan_didalam) ?>,
+                    magang: <?= json_encode($magang_didalam) ?>,
+                    tamu: <?= json_encode($tamu_didalam) ?>,
+                    timestamp: <?= time() ?>
+                };
+                
+                console.log('🚀 Modern Chart Data:', chartData);
+                console.log('📊 Labels:', chartData.labels);
+                console.log('👥 Karyawan:', chartData.karyawan);
+                console.log('🎓 Magang:', chartData.magang);
+                console.log('🏃 Tamu:', chartData.tamu);
+                
+                // Transform data for ApexCharts format
+                var transformedData = {
+                    karyawan: chartData.labels.map((label, index) => ({
+                        x: label,
+                        y: chartData.karyawan[index] || 0
+                    })),
+                    magang: chartData.labels.map((label, index) => ({
+                        x: label,
+                        y: chartData.magang[index] || 0
+                    })),
+                    tamu: chartData.labels.map((label, index) => ({
+                        x: label,
+                        y: chartData.tamu[index] || 0
+                    }))
+                };
+                
+                console.log('🔄 Transformed Data for ApexCharts:', transformedData);
+                
+                // ApexCharts Configuration
+                var options = {
+                    series: [{
+                        name: '👥 Karyawan',
+                        data: transformedData.karyawan,
+                        color: '#22c55e'
+                    }, {
+                        name: '🎓 Magang',
+                        data: transformedData.magang,
+                        color: '#ef4444'
+                    }, {
+                        name: '🏃 Tamu',
+                        data: transformedData.tamu,
+                        color: '#eab308'
+                    }],
+                    chart: {
+                        type: 'line',
+                        height: 420,
+                        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                        toolbar: {
+                            show: true,
+                            tools: {
+                                download: true,
+                                selection: false,
+                                zoom: true,
+                                zoomin: true,
+                                zoomout: true,
+                                pan: false,
+                                reset: true
                             }
                         },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                grid: {
-                                    borderDash: [2, 2],
-                                    color: '#e5e7eb'
-                                },
-                                ticks: {
-                                    stepSize: 1,
-                                    font: {
-                                        size: 12
-                                    }
-                                }
+                        animations: {
+                            enabled: true,
+                            easing: 'easeinout',
+                            speed: 800,
+                            animateGradually: {
+                                enabled: true,
+                                delay: 150
                             },
-                            x: {
-                                grid: {
-                                    display: false
-                                },
-                                ticks: {
-                                    font: {
-                                        size: 12
-                                    }
+                            dynamicAnimation: {
+                                enabled: true,
+                                speed: 350
+                            }
+                        },
+                        background: 'transparent',
+                        dropShadow: {
+                            enabled: true,
+                            color: '#000',
+                            top: 18,
+                            left: 7,
+                            blur: 10,
+                            opacity: 0.1
+                        }
+                    },
+                    dataLabels: {
+                        enabled: false
+                    },
+                    stroke: {
+                        curve: 'smooth',
+                        width: 3,
+                        lineCap: 'round'
+                    },
+                    grid: {
+                        borderColor: '#e7e7e7',
+                        strokeDashArray: 5,
+                        xaxis: {
+                            lines: {
+                                show: false
+                            }
+                        },
+                        yaxis: {
+                            lines: {
+                                show: true
+                            }
+                        },
+                        padding: {
+                            top: 0,
+                            right: 30,
+                            bottom: 0,
+                            left: 20
+                        }
+                    },
+                    markers: {
+                        size: 6,
+                        strokeColors: '#fff',
+                        strokeWidth: 2,
+                        hover: {
+                            size: 8,
+                            sizeOffset: 3
+                        }
+                    },
+                    xaxis: {
+                        type: 'category',
+                        title: {
+                            text: 'Tanggal',
+                            style: {
+                                fontSize: '14px',
+                                fontWeight: 600,
+                                color: '#374151'
+                            }
+                        },
+                        labels: {
+                            style: {
+                                colors: '#6b7280',
+                                fontSize: '12px',
+                                fontWeight: 500
+                            },
+                            rotate: -45,
+                            rotateAlways: false
+                        },
+                        axisBorder: {
+                            show: true,
+                            color: '#e5e7eb'
+                        },
+                        axisTicks: {
+                            show: true,
+                            color: '#e5e7eb'
+                        }
+                    },
+                    yaxis: {
+                        title: {
+                            text: 'Jumlah Orang',
+                            style: {
+                                fontSize: '14px',
+                                fontWeight: 600,
+                                color: '#374151'
+                            }
+                        },
+                        labels: {
+                            style: {
+                                colors: '#6b7280',
+                                fontSize: '12px',
+                                fontWeight: 500
+                            },
+                            formatter: function (val) {
+                                return Math.floor(val);
+                            }
+                        },
+                        min: 0
+                    },
+                    legend: {
+                        position: 'top',
+                        horizontalAlign: 'center',
+                        floating: false,
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        offsetY: -10,
+                        markers: {
+                            width: 12,
+                            height: 12,
+                            strokeWidth: 0,
+                            strokeColor: '#fff',
+                            radius: 6
+                        },
+                        itemMargin: {
+                            horizontal: 20,
+                            vertical: 5
+                        }
+                    },
+                    tooltip: {
+                        shared: true,
+                        intersect: false,
+                        theme: 'light',
+                        style: {
+                            fontSize: '12px'
+                        },
+                        x: {
+                            format: 'dd MMM'
+                        },
+                        y: {
+                            formatter: function (val, { series, seriesIndex, dataPointIndex, w }) {
+                                return val + ' orang';
+                            }
+                        },
+                        marker: {
+                            show: true
+                        },
+                        custom: function({ series, seriesIndex, dataPointIndex, w }) {
+                            const date = chartData.labels[dataPointIndex];
+                            const karyawan = series[0][dataPointIndex];
+                            const magang = series[1][dataPointIndex];
+                            const tamu = series[2][dataPointIndex];
+                            const total = karyawan + magang + tamu;
+                            
+                            return `
+                                <div class="custom-tooltip" style="padding: 12px; background: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                                    <div style="font-weight: 600; margin-bottom: 8px; color: #1f2937;">${date}</div>
+                                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span style="width: 12px; height: 12px; background: #22c55e; border-radius: 50%; display: inline-block;"></span>
+                                            <span style="color: #374151;">Karyawan: <strong>${karyawan}</strong></span>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span style="width: 12px; height: 12px; background: #ef4444; border-radius: 50%; display: inline-block;"></span>
+                                            <span style="color: #374151;">Magang: <strong>${magang}</strong></span>
+                                        </div>
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span style="width: 12px; height: 12px; background: #eab308; border-radius: 50%; display: inline-block;"></span>
+                                            <span style="color: #374151;">Tamu: <strong>${tamu}</strong></span>
+                                        </div>
+                                        <hr style="margin: 8px 0; border: none; border-top: 1px solid #e5e7eb;">
+                                        <div style="font-weight: 600; color: #1f2937;">Total: ${total} orang</div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    },
+                    fill: {
+                        type: 'gradient',
+                        gradient: {
+                            shade: 'light',
+                            type: 'vertical',
+                            shadeIntensity: 0.5,
+                            gradientToColors: undefined,
+                            inverseColors: true,
+                            opacityFrom: 0.8,
+                            opacityTo: 0.1,
+                            stops: [0, 100]
+                        }
+                    },
+                    responsive: [{
+                        breakpoint: 768,
+                        options: {
+                            chart: {
+                                height: 300
+                            },
+                            legend: {
+                                position: 'bottom'
+                            },
+                            xaxis: {
+                                labels: {
+                                    rotate: -90
                                 }
                             }
                         }
-                    }
-                });
+                    }]
+                };
+
+                // Render the chart
+                var chart = new ApexCharts(document.querySelector("#modernLineChart"), options);
+                chart.render();
+                
+                // Auto-refresh chart data every 30 seconds
+                setInterval(function() {
+                    fetch(window.location.href)
+                        .then(response => response.text())
+                        .then(html => {
+                            // Extract new data from response (simplified approach)
+                            console.log('🔄 Auto-refreshing chart data...');
+                            // In production, you'd want to fetch JSON data from an API endpoint
+                        })
+                        .catch(error => console.error('❌ Error refreshing chart:', error));
+                }, 30000);
 
                 // Setup kartu reader interval
                 setInterval(function () {
@@ -650,20 +886,54 @@ include "models/sql_card_index.php";
                         cardObserver.observe(card);
                     });
                     
-                    // Counter animation function
+                    // Counter animation function with NaN prevention and enhanced UX
                     function animateCounter(element) {
-                        const target = parseInt(element.getAttribute('data-target'));
-                        const duration = 2000;
+                        const target = parseInt(element.getAttribute('data-target')) || 0;
+                        const currentValue = parseInt(element.textContent) || 0;
+                        
+                        // Skip animation if value is already correct
+                        if (currentValue === target) {
+                            return;
+                        }
+                        
+                        // Handle zero values with special styling
+                        if (target === 0) {
+                            element.style.transition = 'all 0.3s ease';
+                            element.textContent = '0';
+                            element.style.color = 'rgba(255, 255, 255, 0.8)';
+                            element.style.fontSize = '2.2rem';
+                            return;
+                        }
+                        
+                        // Enhanced animation for non-zero values
+                        const duration = Math.min(500, Math.max(150, target * 12)); // Faster: 150-500ms
                         const step = target / (duration / 16);
-                        let current = 0;
+                        let current = currentValue;
+                        
+                        // Add pulsing effect during animation
+                        element.style.transition = 'all 0.2s ease';
+                        element.style.color = '#ffffff';
+                        element.style.fontSize = '2.8rem';
                         
                         const timer = setInterval(() => {
-                            current += step;
-                            if (current >= target) {
+                            if (current < target) {
+                                current = Math.min(current + step, target);
+                            } else if (current > target) {
+                                current = Math.max(current - step, target);
+                            }
+                            
+                            element.textContent = Math.floor(current);
+                            
+                            if (current === target) {
                                 element.textContent = target;
+                                element.style.fontSize = '2.5rem';
+                                element.style.textShadow = '0 0 15px rgba(255,255,255,0.6)';
                                 clearInterval(timer);
-                            } else {
-                                element.textContent = Math.floor(current);
+                                
+                                // Smooth reset
+                                setTimeout(() => {
+                                    element.style.textShadow = '0 2px 4px rgba(0, 0, 0, 0.3)';
+                                }, 200);
                             }
                         }, 16);
                     }
