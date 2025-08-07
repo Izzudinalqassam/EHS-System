@@ -98,22 +98,63 @@ if(isset($_POST['reset_password'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
     $username = mysqli_real_escape_string($conn, $_POST['username']);
     $password = mysqli_real_escape_string($conn, $_POST['password']);
-
-    $query = "SELECT * FROM login WHERE username = '$username' AND password = '$password'";
-    $result = mysqli_query($conn, $query);
-
-    if (mysqli_num_rows($result) === 1) {
-        $user = mysqli_fetch_assoc($result);
-        $_SESSION['username'] = $username;
-        $_SESSION['role'] = $user['role'];
+    
+    // Inisialisasi session untuk tracking login attempts
+    if (!isset($_SESSION['login_attempts'])) {
+        $_SESSION['login_attempts'] = 0;
+        $_SESSION['last_attempt_time'] = 0;
+    }
+    
+    // Cek apakah masih dalam periode cooldown (10 menit = 600 detik)
+    $current_time = time();
+    $cooldown_period = 600; // 10 menit
+    
+    if ($_SESSION['login_attempts'] >= 3) {
+        $time_remaining = $cooldown_period - ($current_time - $_SESSION['last_attempt_time']);
         
-        // Tambahkan status login sukses ke session
-        $_SESSION['login_success'] = true;
-        
-        header('Location: index.php');
-        exit();
-    } else {
-        $error = "Username atau password salah!";
+        if ($time_remaining > 0) {
+            $minutes_remaining = ceil($time_remaining / 60);
+            $error = "Terlalu banyak percobaan login gagal. Silakan coba lagi dalam $minutes_remaining menit.";
+        } else {
+            // Reset attempts setelah cooldown selesai
+            $_SESSION['login_attempts'] = 0;
+            $_SESSION['last_attempt_time'] = 0;
+        }
+    }
+    
+    // Proses login jika tidak dalam cooldown
+    if (!isset($error)) {
+        $query = "SELECT * FROM login WHERE username = '$username' AND password = '$password'";
+        $result = mysqli_query($conn, $query);
+
+        if (mysqli_num_rows($result) === 1) {
+            $user = mysqli_fetch_assoc($result);
+            
+            // Reset login attempts pada login sukses
+            $_SESSION['login_attempts'] = 0;
+            $_SESSION['last_attempt_time'] = 0;
+            
+            $_SESSION['username'] = $username;
+            $_SESSION['role'] = $user['role'];
+            
+            // Tambahkan status login sukses ke session
+            $_SESSION['login_success'] = true;
+            
+            header('Location: index.php');
+            exit();
+        } else {
+            // Increment login attempts
+            $_SESSION['login_attempts']++;
+            $_SESSION['last_attempt_time'] = $current_time;
+            
+            $remaining_attempts = 3 - $_SESSION['login_attempts'];
+            
+            if ($_SESSION['login_attempts'] >= 3) {
+                $error = "Terlalu banyak percobaan login gagal. Akun Anda diblokir selama 10 menit.";
+            } else {
+                $error = "Username atau password salah! Sisa percobaan: $remaining_attempts kali.";
+            }
+        }
     }
 }
 ?>
@@ -198,6 +239,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+        
+        /* Login attempt styling */
+        .login-error {
+            color: #dc3545;
+            text-align: center;
+            font-size: 14px;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: rgba(220, 53, 69, 0.1);
+            border: 1px solid rgba(220, 53, 69, 0.2);
+        }
+        
+        .login-warning {
+            color: #856404;
+            text-align: center;
+            font-size: 14px;
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.2);
+        }
+        
+        .countdown-timer {
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+        }
+        
+        /* Disable form when blocked */
+        .form-blocked {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        
+        .form-blocked .form__input {
+            background-color: #f8f9fa;
+            cursor: not-allowed;
+        }
+        
+        .form-blocked .form__button {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -208,7 +293,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
         <div class="form">
             <img src="assets_login/img/authentication.svg" alt="" class="form__img">
 
-            <form method="POST" action="login.php" class="form__content">
+            <?php 
+            $form_class = "form__content";
+            $is_blocked = isset($error) && strpos($error, 'Terlalu banyak percobaan') !== false;
+            if ($is_blocked) {
+                $form_class .= " form-blocked";
+            }
+            ?>
+            <form method="POST" action="login.php" class="<?php echo $form_class; ?>">
                 <h1 class="form__title">Personal Counting EHS </h1>
 
                 <div class="form__div form__div-one">
@@ -218,7 +310,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
 
                     <div class="form__div-input">
                         <label for="username" class="form__label">Username</label>
-                        <input type="text" name="username" id="username" class="form__input" required>
+                        <input type="text" name="username" id="username" class="form__input" <?php echo $is_blocked ? 'disabled' : ''; ?> required>
                     </div>
                 </div>
 
@@ -229,19 +321,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
 
                     <div class="form__div-input">
                         <label for="password" class="form__label">Password</label>
-                        <input type="password" name="password" id="password" class="form__input" required>
+                        <input type="password" name="password" id="password" class="form__input" <?php echo $is_blocked ? 'disabled' : ''; ?> required>
                     </div>
                 </div>
                 
                 <?php if (!empty($error)): ?>
-                    <p style="color: red; text-align: center; font-size: 14px;">
+                    <?php 
+                    $error_class = "login-error";
+                    if (strpos($error, 'Sisa percobaan') !== false) {
+                        $error_class = "login-warning";
+                    }
+                    if (strpos($error, 'Terlalu banyak percobaan') !== false) {
+                        $error_class .= " countdown-timer";
+                    }
+                    ?>
+                    <p class="<?php echo $error_class; ?>">
                         <?php echo $error; ?>
                     </p>
                 <?php endif; ?>
 
-                <a href="#" class="form__forgot" id="forgotPassword">Lupa Password?</a>
+                <a href="#" class="form__forgot" id="forgotPassword" <?php echo $is_blocked ? 'style="pointer-events: none; opacity: 0.5;"' : ''; ?>>Lupa Password?</a>
 
-                <input type="submit" name="login" class="form__button" value="Login">
+                <input type="submit" name="login" class="form__button" value="<?php echo $is_blocked ? 'Login Diblokir' : 'Login'; ?>" <?php echo $is_blocked ? 'disabled' : ''; ?>>
             </form>
         </div>
     </div>
@@ -305,7 +406,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
 
         // When the user clicks the button, open the modal 
         btn.onclick = function() {
+            <?php if (!$is_blocked): ?>
             modal.style.display = "block";
+            <?php else: ?>
+            Swal.fire({
+                icon: 'warning',
+                title: 'Akses Diblokir',
+                text: 'Anda tidak dapat mengakses fitur ini saat login diblokir.',
+                confirmButtonColor: '#f39c12'
+            });
+            <?php endif; ?>
         }
 
         // When the user clicks on <span> (x), close the modal
@@ -327,6 +437,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
                 alerts[i].style.display = 'none';
             }
         }, 5000);
+        
+        // Prevent form submission when blocked
+        <?php if ($is_blocked): ?>
+        document.querySelector('.form__content').addEventListener('submit', function(e) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'error',
+                title: 'Login Diblokir',
+                text: 'Silakan tunggu hingga periode cooldown selesai.',
+                confirmButtonColor: '#d33'
+            });
+        });
+        <?php endif; ?>
     </script>
     <script>
     $(document).ready(function() {
@@ -371,6 +494,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
             title: 'Oops...',
             text: '<?php echo $error_message; ?>',
             confirmButtonColor: '#d33',
+        });
+    <?php endif; ?>
+    
+    <?php if (isset($error) && strpos($error, 'Terlalu banyak percobaan') !== false) : ?>
+        // Countdown timer untuk cooldown
+        <?php 
+        $current_time = time();
+        $time_remaining = 600 - ($current_time - $_SESSION['last_attempt_time']);
+        if ($time_remaining > 0) :
+        ?>
+        let timeRemaining = <?php echo $time_remaining; ?>;
+        
+        function updateCountdown() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            
+            const errorElement = document.querySelector('.form__content p');
+            if (errorElement && timeRemaining > 0) {
+                errorElement.innerHTML = `Terlalu banyak percobaan login gagal. Silakan coba lagi dalam ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                timeRemaining--;
+                
+                if (timeRemaining <= 0) {
+                    errorElement.innerHTML = 'Cooldown selesai. Silakan refresh halaman untuk mencoba login kembali.';
+                    // Auto refresh setelah cooldown
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                }
+            }
+        }
+        
+        // Update countdown setiap detik
+        const countdownInterval = setInterval(updateCountdown, 1000);
+        updateCountdown(); // Jalankan sekali langsung
+        
+        // Hentikan countdown jika waktu habis
+        setTimeout(() => {
+            clearInterval(countdownInterval);
+        }, timeRemaining * 1000);
+        <?php endif; ?>
+    <?php endif; ?>
+    
+    <?php if (isset($error) && strpos($error, 'Sisa percobaan') !== false) : ?>
+        // Notifikasi untuk sisa percobaan
+        Swal.fire({
+            icon: 'warning',
+            title: 'Login Gagal!',
+            text: '<?php echo $error; ?>',
+            confirmButtonColor: '#f39c12',
+            timer: 5000,
+            timerProgressBar: true
         });
     <?php endif; ?>
 </script>
