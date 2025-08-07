@@ -43,47 +43,7 @@ $sql = mysqli_query($konek, "SELECT * FROM karyawan WHERE departmen = 'tamu'");
     </ul>
 </nav>
     <div id="layoutSidenav">
-        <div id="layoutSidenav_nav">
-            <nav class="sb-sidenav accordion sb-sidenav-dark" id="sidenavAccordion">
-                <div class="sb-sidenav-menu">
-                    <div class="nav">
-                        <div class="sb-sidenav-menu-heading">Core</div>
-                        <a class="nav-link" href="index.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-home"></i></div>
-                            Home
-                        </a>
-                        <a class="nav-link" href="datakaryawan.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-user"></i></div>
-                            Data Karyawan
-                        </a>
-                        <a class="nav-link" href="absensi.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-table"></i></div>
-                            Rekapitulasi Karyawan
-                        </a>
-                        <a class="nav-link" href="absensi_tamu.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>
-                            Rekapitulasi Tamu
-                        </a>
-                        <a class="nav-link" href="absensi_magang.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-graduation-cap"></i></div>
-                            Rekapitulasi Magang
-                        </a>
-                        <a class="nav-link" href="riwayat.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-history"></i></div>
-                            Riwayat Absen
-                        </a>
-                        <a class="nav-link" href="scan.php">
-                            <div class="sb-nav-link-icon"><i class="fas fa-id-card"></i></div>
-                            Scan Kartu
-                        </a>
-                    </div>
-                </div>
-                <div class="sb-sidenav-footer">
-                    <div class="small">Logged in as:</div>
-                    Start Bootstrap
-                </div>
-            </nav>
-        </div>
+        <?php include 'components/sidenav.php'; ?>
         <div id="layoutSidenav_content">
             <main>
                 <div class="container-fluid">

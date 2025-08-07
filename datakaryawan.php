@@ -22,10 +22,6 @@ $totalKaryawanQuery = mysqli_query($konek, "SELECT COUNT(*) as total FROM karyaw
 $totalKaryawanData = mysqli_fetch_assoc($totalKaryawanQuery);
 $totalKaryawan = $totalKaryawanData['total'];
 
-$totalTamuQuery = mysqli_query($konek, "SELECT COUNT(*) as total FROM karyawan WHERE departmen = 'tamu'");
-$totalTamuData = mysqli_fetch_assoc($totalTamuQuery);
-$totalTamu = $totalTamuData['total'];
-
 $totalMagangQuery = mysqli_query($konek, "SELECT COUNT(*) as total FROM karyawan WHERE departmen = 'Magang'");
 $totalMagangData = mysqli_fetch_assoc($totalMagangQuery);
 $totalMagang = $totalMagangData['total'];
@@ -492,27 +488,6 @@ $totalKaryawanNonTamu = $totalKaryawanNonTamuData['total'];
                                 </div>
                                 <div class="card-footer d-flex align-items-center justify-content-between">
                                     <a class="small text-white stretched-link" href="detail_data_semua.php">
-                                        <i class="fas fa-chart-line mr-2"></i>View Details
-                                    </a>
-                                    <div class="small text-white"><i class="fas fa-arrow-right"></i></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Additional Guests Card (if needed) -->
-                        <div class="col-xl-3 col-md-6">
-                            <div class="card stats-card card-guests text-white animated-card">
-                                <div class="card-body">
-                                    <div class="card-content">
-                                        <div class="card-title">Total Tamu</div>
-                                        <h1 class="card-number"><?= $totalTamu ?></h1>
-                                    </div>
-                                    <div class="card-icon">
-                                        <i class="fas fa-user-tag"></i>
-                                    </div>
-                                </div>
-                                <div class="card-footer d-flex align-items-center justify-content-between">
-                                    <a class="small text-white stretched-link" href="detail_data_tamu.php">
                                         <i class="fas fa-chart-line mr-2"></i>View Details
                                     </a>
                                     <div class="small text-white"><i class="fas fa-arrow-right"></i></div>

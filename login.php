@@ -1,8 +1,8 @@
 <?php
 // koneksi.php - sudah di-include di bawah
-$host = "db";
+$host = "localhost";
 $user = "root";
-$password = "root"; 
+$password = ""; 
 $database = "absenrfid"; 
 
 // Membuat koneksi
